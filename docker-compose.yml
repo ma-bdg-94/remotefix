@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  remotefix-server:
+    build: './remotefix2-server'
+    container_name: 'remotefix-server'
+    ports:
+      - '9400:7200'
+    env_file:
+      - './.env'
+    environment:
+      NODE_ENV: 'stage'
+      PORT: ${APP_PORT_STAGE}
+      MONGO_URI: ${MONGO_URI_STAGE}
+    networks:
+      - app-network
+  
+  remotefix-client:
+    build: './remotefix2-client'
+    container_name: 'remotefix-client'
+    ports:
+      - '80:80'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
