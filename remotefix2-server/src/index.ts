@@ -4,7 +4,7 @@ import * as cors from "cors";
 import connectDB from "./database";
 import { DEVELOPMENT, PRODUCTION, STAGE } from "./utils/constants/environments.ts";
 
-dotenv.config({ path: "./.env" });
+dotenv.config({ path: "../.env" });
 const app: express.Application = express();
 
 app.use(

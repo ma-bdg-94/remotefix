@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { connect, set } from "mongoose";
 import { DEVELOPMENT, PRODUCTION, STAGE } from "./utils/constants/environments";
 
