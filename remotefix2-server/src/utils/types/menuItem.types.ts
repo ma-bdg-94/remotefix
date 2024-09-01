@@ -5,8 +5,7 @@ export interface MenuItemInterface extends Document {
     label: MultiLanguageText;
     link: string;
     private: boolean;
-    position: "vertical" | "horizontal";
-    allowedUsers: string[];
+    position: string;
     iconed: boolean;
     icon?: string;
     scope: string[];
