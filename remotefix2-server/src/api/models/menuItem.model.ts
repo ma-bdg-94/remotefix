@@ -33,7 +33,6 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
     },
     iconed: {
       type: Boolean,
-      required: true,
       default: false,
     },
     icon: {
@@ -48,7 +47,6 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
     ],
     hash: {
       type: Boolean,
-      required: true,
       default: false,
     },
   },
