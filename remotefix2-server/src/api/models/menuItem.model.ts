@@ -1,10 +1,6 @@
 import { Schema, model } from "mongoose";
 import * as mongooseDelete from "mongoose-delete";
 import { MenuItemInterface } from "../../utils/types/menuItem.types";
-import {
-  HORIZONTAL,
-  MENU_ITEMS_POSITIONS,
-} from "../../utils/constants/menuItems";
 
 const MenuItemSchema = new Schema<MenuItemInterface>(
   {
@@ -26,15 +22,6 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
       type: Boolean,
       required: true,
     },
-    position: {
-      type: String,
-      enum: MENU_ITEMS_POSITIONS,
-      default: HORIZONTAL,
-    },
-    iconed: {
-      type: Boolean,
-      default: false,
-    },
     icon: {
       type: String,
       required: false,
@@ -44,11 +31,7 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
         type: String,
         required: false,
       },
-    ],
-    hash: {
-      type: Boolean,
-      default: false,
-    },
+    ]
   },
   {
     timestamps: true,

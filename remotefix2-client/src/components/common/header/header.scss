@@ -1,0 +1,49 @@
+.header {
+  background-color: #0b1d51 !important;
+  height: 12vh;
+
+  .navlink {
+    text-decoration: none;
+
+    .nav-link {
+      color: white !important;
+
+      &:hover,
+      &:active,
+      &:focus {
+        color: white !important;
+      }
+    }
+  }
+
+  .brand {
+    font-family: "Playwrite CU", sans-serif;
+    color: #fff;
+    font-weight: bolder;
+  }
+
+  .menu, .controls {
+    font-family: "Poppins", sans-serif;
+  }
+
+  .controls {
+    font-size: .8rem !important;
+    font-weight: bold;
+    width: 25%;
+    justify-content: space-between;
+
+    > *:first-child {
+      background-color: #0b1d51 !important;
+      border: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    > *:nth-child(2) {
+      background-color: #f8f32b !important;
+      border: none;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+}

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as status from "http-status";
 import { isValidObjectId } from "mongoose";
-import { MENU_ITEMS_POSITIONS } from "../../../utils/constants/menuItems";
 import { ValidationError } from "../../../utils/types/common";
 
 export const validateMenuItemCreation = (
@@ -51,6 +50,7 @@ export const validateMenuItemCreation = (
     req.body.link &&
     (!req.body.link?.startsWith("/") ||
       !req.body.link?.startsWith("http") ||
+      !req.body.link?.startsWith("#") ||
       typeof req.body.link !== "string")
   ) {
     errors.push({
@@ -82,34 +82,6 @@ export const validateMenuItemCreation = (
       message: {
         en: "Privacy value must be exculsively boolean!",
         ar: "قيمة الخصوصية يجب أن تكون منطقية حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (
-    req.body.position &&
-    (!MENU_ITEMS_POSITIONS.includes(req.body.position) ||
-      typeof req.body.position !== "string")
-  ) {
-    errors.push({
-      fields: ["position"],
-      message: {
-        en: "Position is not valid!",
-        ar: "الوضعية غير صالحة!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.iconed && typeof req.body.iconed !== "boolean") {
-    errors.push({
-      fields: ["iconed"],
-      message: {
-        en: "Iconed value must be exculsively boolean!",
-        ar: "قيمة التنصيم يجب أن تكون منطقية حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
@@ -149,18 +121,6 @@ export const validateMenuItemCreation = (
       message: {
         en: "Scope value must be exculsively string!",
         ar: "قيمة النطاق يجب أن تكون متسلسلة حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.hash && typeof req.body.hash !== "boolean") {
-    errors.push({
-      fields: ["hash"],
-      message: {
-        en: "Hash value must be exculsively boolean!",
-        ar: "قيمة الخدش يجب أن تكون منطقية حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
@@ -279,58 +239,6 @@ export const validateMenuItemUpdate = (
   }
 
   if (
-    req.body.position &&
-    (!MENU_ITEMS_POSITIONS.includes(req.body.position) ||
-      typeof req.body.position !== "string")
-  ) {
-    errors.push({
-      fields: ["position"],
-      message: {
-        en: "Position is not valid!",
-        ar: "الوضعية غير صالحة!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.iconed && typeof req.body.iconed !== "boolean") {
-    errors.push({
-      fields: ["iconed"],
-      message: {
-        en: "Iconed value must be exculsively boolean!",
-        ar: "قيمة التنصيم يجب أن تكون منطقية حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.icon && typeof req.body.icon !== "string") {
-    errors.push({
-      fields: ["icon"],
-      message: {
-        en: "Icon value must be exculsively string!",
-        ar: "قيمة النصمة يجب أن تكون متسلسلة حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (!req.body.scope || (req.body.scope && req.body.scope?.length < 1)) {
-    errors.push({
-      fields: ["scope"],
-      message: {
-        en: "Please specify one scope at least!",
-        ar: "الرجاء تحديد نطاق واحد على الأقل!",
-      },
-      error: status[status.NOT_FOUND].toUpperCase(),
-      code: status.NOT_FOUND,
-    });
-  }
-
-  if (
     req.body.scope &&
     !req.body.scope?.every((it: any) => typeof it === "string")
   ) {
@@ -339,18 +247,6 @@ export const validateMenuItemUpdate = (
       message: {
         en: "Scope value must be exculsively string!",
         ar: "قيمة النطاق يجب أن تكون متسلسلة حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.hash && typeof req.body.hash !== "boolean") {
-    errors.push({
-      fields: ["hash"],
-      message: {
-        en: "Hash value must be exculsively boolean!",
-        ar: "قيمة الخدش يجب أن تكون منطقية حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
