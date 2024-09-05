@@ -6,7 +6,7 @@ export const items: any = [
       ar: "الرئيسية",
     },
     link: "/",
-    private: false,
+    isPrivate: false,
     scope: ["navigation"],
   },
   {
@@ -16,7 +16,7 @@ export const items: any = [
       ar: "من نحن",
     },
     link: "#",
-    private: false,
+    isPrivate: false,
     scope: ["navigation", "dropdown"]
   },
   {
@@ -26,7 +26,7 @@ export const items: any = [
       ar: "الخدمات",
     },
     link: "#",
-    private: false,
+    isPrivate: false,
     scope: ["navigation", "dropdown"]
   },
   {
@@ -36,7 +36,7 @@ export const items: any = [
       ar: "إتصل بنا",
     },
     link: "/contact",
-    private: false,
+    isPrivate: false,
     scope: ["navigation"],
   },
 ];

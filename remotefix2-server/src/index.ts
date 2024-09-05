@@ -2,6 +2,7 @@ import * as express from "express";
 import * as dotenv from "dotenv";
 import * as cors from "cors";
 import connectDB from "./database";
+import routes from "./api/routes";
 import { DEVELOPMENT, PRODUCTION, STAGE } from "./utils/constants/environments.ts";
 
 dotenv.config({ path: "../.env" });
@@ -21,6 +22,8 @@ app.get("/test", (_req: express.Request, res: express.Response) => {
   res.status(200).send("This a test!");
 });
 
+app.use(routes);
+
 const environment: string | undefined = process.env.NODE_ENV;
 
 const port: number =
@@ -31,7 +34,7 @@ const port: number =
     : environment === PRODUCTION
     ? parseInt(process.env.APP_PORT_PROD!)
     : 5000;
-app.listen(5000, (): void => {
+app.listen(port, (): void => {
   console.log(
     `\t✅ Application is successfully running on ${environment?.toUpperCase()} environment at port: ${port}!`
   );

@@ -5,7 +5,7 @@ export type MultiLanguageText = {
 
 export interface ValidationError {
     fields: string[];
-    message: MultiLanguageText;
+    description: MultiLanguageText;
     error: string;
     code: number
 }

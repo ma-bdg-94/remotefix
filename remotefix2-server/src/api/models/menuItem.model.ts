@@ -18,13 +18,21 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
       type: String,
       required: true,
     },
-    private: {
+    isPrivate: {
       type: Boolean,
       required: true,
+      default: false
     },
     icon: {
       type: String,
       required: false,
+    },
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+    order: {
+      type: Number
     },
     scope: [
       {

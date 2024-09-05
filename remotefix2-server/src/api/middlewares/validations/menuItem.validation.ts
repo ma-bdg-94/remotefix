@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import * as status from "http-status";
 import { isValidObjectId } from "mongoose";
 import { ValidationError } from "../../../utils/types/common";
+import { filterObject } from "../../../utils/functions/utilities";
+import { SORTING_CRITERIA } from "../../../utils/constants/common";
+
+const linkRegex =
+  /^(?:(?:https?|ftp):\/\/|#|\/)(?:[\w_-]+(?:\.[\w_-]+)+|[\w_-]+|)?(?:\?[\w_-]+=\w+&?)*$/;
 
 export const validateMenuItemCreation = (
   req: Request,
@@ -13,7 +18,7 @@ export const validateMenuItemCreation = (
   if (!req.body.label?.en) {
     errors.push({
       fields: ["label"],
-      message: {
+      description: {
         en: "Label in English is required!",
         ar: "التسمية بالإنجليزية مطلوبة!",
       },
@@ -25,7 +30,7 @@ export const validateMenuItemCreation = (
   if (!req.body.label?.ar) {
     errors.push({
       fields: ["label"],
-      message: {
+      description: {
         en: "Label in Arabic is required!",
         ar: "التسمية بالعربية مطلوبة!",
       },
@@ -37,7 +42,7 @@ export const validateMenuItemCreation = (
   if (!req.body.link) {
     errors.push({
       fields: ["link"],
-      message: {
+      description: {
         en: "Link is required!",
         ar: "الرابط مطلوب!",
       },
@@ -46,42 +51,12 @@ export const validateMenuItemCreation = (
     });
   }
 
-  if (
-    req.body.link &&
-    (!req.body.link?.startsWith("/") ||
-      !req.body.link?.startsWith("http") ||
-      !req.body.link?.startsWith("#") ||
-      typeof req.body.link !== "string")
-  ) {
+  if (req.body.link && !linkRegex.test(req.body.link)) {
     errors.push({
       fields: ["link"],
-      message: {
+      description: {
         en: "Link is not valid!",
         ar: "الرابط غير صالح!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (!req.body.private) {
-    errors.push({
-      fields: ["private"],
-      message: {
-        en: "Please specify if it is private or public link!",
-        ar: "الرجاء تحديد ما إذا كان الرابط عاما أو خاصا!",
-      },
-      error: status[status.NOT_FOUND].toUpperCase(),
-      code: status.NOT_FOUND,
-    });
-  }
-
-  if (req.body.private && typeof req.body.private !== "boolean") {
-    errors.push({
-      fields: ["private"],
-      message: {
-        en: "Privacy value must be exculsively boolean!",
-        ar: "قيمة الخصوصية يجب أن تكون منطقية حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
@@ -91,9 +66,21 @@ export const validateMenuItemCreation = (
   if (req.body.icon && typeof req.body.icon !== "string") {
     errors.push({
       fields: ["icon"],
-      message: {
+      description: {
         en: "Icon value must be exculsively string!",
         ar: "قيمة النصمة يجب أن تكون متسلسلة حصرا!",
+      },
+      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
+      code: status.UNPROCESSABLE_ENTITY,
+    });
+  }
+
+  if (req.body.archived && typeof req.body.archived !== "boolean") {
+    errors.push({
+      fields: ["archived"],
+      description: {
+        en: "Archiving value must be exculsively boolean!",
+        ar: "قيمة الأرشفة يجب أن تكون منطقية حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
@@ -103,7 +90,7 @@ export const validateMenuItemCreation = (
   if (!req.body.scope || (req.body.scope && req.body.scope?.length < 1)) {
     errors.push({
       fields: ["scope"],
-      message: {
+      description: {
         en: "Please specify one scope at least!",
         ar: "الرجاء تحديد نطاق واحد على الأقل!",
       },
@@ -118,7 +105,7 @@ export const validateMenuItemCreation = (
   ) {
     errors.push({
       fields: ["scope"],
-      message: {
+      description: {
         en: "Scope value must be exculsively string!",
         ar: "قيمة النطاق يجب أن تكون متسلسلة حصرا!",
       },
@@ -145,14 +132,16 @@ export const validateMenuItemCreation = (
 
     return res.status(finalStatus).json({
       success: false,
-      status:
+      message:
         finalStatus === status.NOT_FOUND
           ? status[status.NOT_FOUND].toUpperCase()
           : finalStatus === status.UNPROCESSABLE_ENTITY
           ? status[status.UNPROCESSABLE_ENTITY].toUpperCase()
           : status[status.BAD_REQUEST].toUpperCase(),
-      code: finalStatus,
-      errors,
+      status: finalStatus,
+      errors: errors?.map((error: ValidationError) =>
+        filterObject(error, ["error", "code"])
+      ),
     });
   }
 
@@ -166,10 +155,10 @@ export const validateMenuItemId = (
 ): Promise<Response> | any => {
   const errors: ValidationError[] = [];
 
-  if (!isValidObjectId(req.params.menuItemId)) {
+  if (!isValidObjectId(req.params.id)) {
     errors.push({
       fields: ["_id"],
-      message: {
+      description: {
         en: "Menu item's ID seems invalid!",
         ar: "معرف عنصر القائمة يبدو غير صالح!",
       },
@@ -181,9 +170,92 @@ export const validateMenuItemId = (
   if (errors.length > 0) {
     return res.status(status.BAD_REQUEST).json({
       success: false,
-      status: status[status.BAD_REQUEST].toUpperCase(),
-      code: status.BAD_REQUEST,
-      errors,
+      message: status[status.BAD_REQUEST].toUpperCase(),
+      status: status.BAD_REQUEST,
+      errors: errors?.map((error: ValidationError) =>
+        filterObject(error, ["error", "code"])
+      ),
+    });
+  }
+
+  next();
+};
+
+export const validateMenuItemScope = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response> | any => {
+  const errors: ValidationError[] = [];
+
+  if (req.body.scope && req.body.scope?.length < 1) {
+    errors.push({
+      fields: ["scope"],
+      description: {
+        en: "Please specify one scope at least!",
+        ar: "الرجاء تحديد نطاق واحد على الأقل!",
+      },
+      error: status[status.NOT_FOUND].toUpperCase(),
+      code: status.NOT_FOUND,
+    });
+  }
+
+  if (
+    req.body.scope &&
+    !req.body.scope?.every((it: any) => typeof it === "string")
+  ) {
+    errors.push({
+      fields: ["scope"],
+      description: {
+        en: "Scope value must be exculsively string!",
+        ar: "قيمة النطاق يجب أن تكون متسلسلة حصرا!",
+      },
+      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
+      code: status.UNPROCESSABLE_ENTITY,
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(status.BAD_REQUEST).json({
+      success: false,
+      message: status[status.BAD_REQUEST].toUpperCase(),
+      status: status.BAD_REQUEST,
+      errors: errors?.map((error: ValidationError) =>
+        filterObject(error, ["error", "code"])
+      ),
+    });
+  }
+
+  next();
+};
+
+export const validateSortingCriteria = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response> | any => {
+  const errors: ValidationError[] = [];
+
+  if (!SORTING_CRITERIA.includes(req.query.sortOrder as any)) {
+    errors.push({
+      fields: ["order"],
+      description: {
+        en: "Sorting criterion seems invalid!",
+        ar: "معامل الترتيب يبدو غير صالح!",
+      },
+      error: status[status.FORBIDDEN].toUpperCase(),
+      code: status.FORBIDDEN,
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(status.BAD_REQUEST).json({
+      success: false,
+      message: status[status.BAD_REQUEST].toUpperCase(),
+      status: status.BAD_REQUEST,
+      errors: errors?.map((error: ValidationError) =>
+        filterObject(error, ["error", "code"])
+      ),
     });
   }
 
@@ -197,10 +269,10 @@ export const validateMenuItemUpdate = (
 ): Promise<Response> | any => {
   const errors: ValidationError[] = [];
 
-  if (!isValidObjectId(req.params.menuItemId)) {
+  if (!isValidObjectId(req.params.id)) {
     errors.push({
       fields: ["_id"],
-      message: {
+      description: {
         en: "Menu item's ID seems invalid!",
         ar: "معرف عنصر القائمة يبدو غير صالح!",
       },
@@ -209,44 +281,12 @@ export const validateMenuItemUpdate = (
     });
   }
 
-  if (
-    req.body.link &&
-    (!req.body.link?.startsWith("/") ||
-      !req.body.link?.startsWith("http") ||
-      typeof req.body.link !== "string")
-  ) {
+  if (req.body.link && !linkRegex.test(req.body.link)) {
     errors.push({
       fields: ["link"],
-      message: {
+      description: {
         en: "Link is not valid!",
         ar: "الرابط غير صالح!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (req.body.private && typeof req.body.private !== "boolean") {
-    errors.push({
-      fields: ["private"],
-      message: {
-        en: "Privacy value must be exculsively boolean!",
-        ar: "قيمة الخصوصية يجب أن تكون منطقية حصرا!",
-      },
-      error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
-      code: status.UNPROCESSABLE_ENTITY,
-    });
-  }
-
-  if (
-    req.body.scope &&
-    !req.body.scope?.every((it: any) => typeof it === "string")
-  ) {
-    errors.push({
-      fields: ["scope"],
-      message: {
-        en: "Scope value must be exculsively string!",
-        ar: "قيمة النطاق يجب أن تكون متسلسلة حصرا!",
       },
       error: status[status.UNPROCESSABLE_ENTITY].toUpperCase(),
       code: status.UNPROCESSABLE_ENTITY,
@@ -271,14 +311,16 @@ export const validateMenuItemUpdate = (
 
     return res.status(finalStatus).json({
       success: false,
-      status:
+      message:
         finalStatus === status.NOT_FOUND
           ? status[status.NOT_FOUND].toUpperCase()
           : finalStatus === status.UNPROCESSABLE_ENTITY
           ? status[status.UNPROCESSABLE_ENTITY].toUpperCase()
           : status[status.BAD_REQUEST].toUpperCase(),
-      code: finalStatus,
-      errors,
+      status: finalStatus,
+      errors: errors?.map((error: ValidationError) =>
+        filterObject(error, ["error", "code"])
+      ),
     });
   }
 
