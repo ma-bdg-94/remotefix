@@ -11,5 +11,4 @@ export type NavItem = {
 
 export interface HeaderProps {
   bigTitle: string;
-  navs: NavItem[];
 }

@@ -116,7 +116,11 @@ export default class MenuItemController {
   }
 
   async getAllMenuItemsByScope(req: Request, res: Response): Promise<Response> {
-    const { scope } = req.body;
+    const scope = req.query.scope
+      ? Array.isArray(req.query.scope)
+        ? req.query.scope
+        : (req.query.scope as string).split(",")
+      : [];
     const sortOrder: SortOrder | any = ![
       -1,
       1,
@@ -182,7 +186,11 @@ export default class MenuItemController {
     req: Request,
     res: Response
   ): Promise<Response> {
-    const { scope } = req.body;
+    const scope = req.query.scope
+      ? Array.isArray(req.query.scope)
+        ? req.query.scope
+        : (req.query.scope as string).split(",")
+      : [];
     try {
       const menuItemList: MenuItemInterface[] | [] = await MenuItem.find({
         deleted: false,
@@ -543,7 +551,10 @@ export default class MenuItemController {
     }
   }
 
-  async softDeleteOrRetrieveMenuItem(req: Request, res: Response): Promise<Response> {
+  async softDeleteOrRetrieveMenuItem(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
     const { id } = req.params;
     try {
       let menuItem: MenuItemInterface | null = await MenuItem.findOne({
@@ -630,9 +641,7 @@ export default class MenuItemController {
        * Here is missing User Authorization
        */
 
-      await MenuItem.findOneAndDelete(
-        { _id: id, deleted: true }
-      );
+      await MenuItem.findOneAndDelete({ _id: id, deleted: true });
 
       return res.status(status.OK).json({
         success: true,
