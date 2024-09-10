@@ -8,8 +8,15 @@ import {
   MenuItemUpdateRequestBody,
   MenuItemScopeFilter,
   SortOrderCriterion,
+  NoMenuItemResponse,
 } from "../../utils/types/menuItem.types";
 import { Id } from "../../utils/types/common";
+
+const headerConfig = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
 
 export const createMenuItem = createAsyncThunk<
   MenuItemDetailsResponse,
@@ -22,11 +29,7 @@ export const createMenuItem = createAsyncThunk<
       const response = await menuItemInstance.post<MenuItemDetailsResponse>(
         "/",
         menuItemCreationData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        headerConfig
       );
       return response.data;
     } catch (error: any) {
@@ -160,11 +163,7 @@ export const updateMenuItemScope = createAsyncThunk<
       const response = await menuItemInstance.patch<MenuItemDetailsResponse>(
         `/scope/${id}`,
         { scope },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        headerConfig
       );
       return response.data;
     } catch (error: any) {
@@ -183,11 +182,7 @@ export const softDeleteOrRetrieveMenuItem = createAsyncThunk<
     try {
       const response = await menuItemInstance.patch<MenuItemDetailsResponse>(
         `/soft/${id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        headerConfig
       );
       return response.data;
     } catch (error: any) {
@@ -202,16 +197,15 @@ export const updateMenuItem = createAsyncThunk<
   AsyncThunkConfig
 >(
   "menu_item/update",
-  async ({ id, menuItemUpdateData }: Id & MenuItemUpdateRequestBody, { rejectWithValue }) => {
+  async (
+    { id, menuItemUpdateData }: Id & MenuItemUpdateRequestBody,
+    { rejectWithValue }
+  ) => {
     try {
       const response = await menuItemInstance.put<MenuItemDetailsResponse>(
         `/${id}`,
         menuItemUpdateData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        headerConfig
       );
       return response.data;
     } catch (error: any) {
@@ -219,3 +213,18 @@ export const updateMenuItem = createAsyncThunk<
     }
   }
 );
+
+export const removeMenuItem = createAsyncThunk<
+  NoMenuItemResponse,
+  Id,
+  AsyncThunkConfig
+>("menu_item/remove", async ({ id }: Id, { rejectWithValue }) => {
+  try {
+    const response = await menuItemInstance.delete<NoMenuItemResponse>(
+      `/${id}`
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response.data);
+  }
+});

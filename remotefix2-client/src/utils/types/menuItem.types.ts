@@ -25,6 +25,10 @@ interface MenuItemListResponseData {
   menuItems: MenuItem[];
 }
 
+interface NoMenuItemResponseData {
+  description: MultiLanguageText;
+}
+
 export interface MenuItemCreationData {
   link: string;
   label: MultiLanguageText;
@@ -65,4 +69,12 @@ export interface MenuItemListResponse {
   status: number;
   errors?: ApiError[];
   data?: MenuItemListResponseData;
+}
+
+export interface NoMenuItemResponse {
+  success: boolean;
+  message: string;
+  status: number;
+  errors?: ApiError[];
+  data?: NoMenuItemResponseData;
 }
