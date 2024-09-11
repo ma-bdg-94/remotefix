@@ -6,7 +6,7 @@ import { filterObject } from "../../../utils/functions/utilities";
 import { SORTING_CRITERIA } from "../../../utils/constants/common";
 
 const linkRegex =
-  /^(?:(?:https?|ftp):\/\/|#|\/)(?:[\w_-]+(?:\.[\w_-]+)+|[\w_-]+|)?(?:\?[\w_-]+=\w+&?)*$/;
+  /^(?:(?:https?|ftp):\/\/|#|\/)(?:[\w_-]+(?:\/[\w_-]+)*)?(?:\?[\w_-]+=\w+(&[\w_-]+=\w+)*)?$/;
 
 export const validateMenuItemCreation = (
   req: Request,

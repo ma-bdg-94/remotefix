@@ -12,15 +12,37 @@ export default class MenuItemController {
        * Here is missing Super Admin Authorization
        */
 
+      if (link !== "#") {
+        const existingMenuItem = await MenuItem.findOne({ link, deleted: false });
+  
+        if (existingMenuItem) {
+          return res.status(status.CONFLICT).json({
+            success: false,
+            message: status[status.CONFLICT].toUpperCase(),
+            status: status.CONFLICT,
+            errors: [
+              {
+                description: {
+                  en: "A menu item with this link already exists!",
+                  ar: "عنصر قائمة بهذا الرابط موجود بالفعل!",
+                },
+                fields: ["link"],
+              },
+            ],
+          });
+        }
+      }
+
       let menuItemsCount: number = await MenuItem.find({
         deleted: false,
+        scope
       }).countDocuments();
       let menuItem: MenuItemInterface = new MenuItem({
         label: {
           en: label?.en,
           ar: label?.ar,
         },
-        link: scope?.includes("navigation") ? "#" : link,
+        link: (scope?.includes("navigation") && !scope?.includes("sub_item")) ? "#" : link,
         isPrivate,
         icon,
         order: menuItemsCount + 1,
