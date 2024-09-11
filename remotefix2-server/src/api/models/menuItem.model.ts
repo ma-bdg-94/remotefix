@@ -39,6 +39,12 @@ const MenuItemSchema = new Schema<MenuItemInterface>(
         type: String,
         required: false,
       },
+    ],
+    subItems: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'MenuItem'
+      }
     ]
   },
   {

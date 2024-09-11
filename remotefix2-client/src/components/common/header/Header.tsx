@@ -1,50 +1,75 @@
-import { Button, Container, Nav, NavDropdown, Navbar } from "react-bootstrap";
+import {
+  Accordion,
+  Button,
+  ButtonGroup,
+  Container,
+  Nav,
+  NavDropdown,
+  Navbar,
+  Offcanvas,
+} from "react-bootstrap";
 import { HeaderProps } from "./header.types";
 import { Link } from "react-router-dom";
 import "./header.scss";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
-import { getAllMenuItemsByScope, getPrivateMenuItemsByScope } from "../../../redux/services/menuItem.service";
+import { useEffect, useState } from "react";
+import {
+  getAllMenuItemsByScope,
+  getPrivateMenuItemsByScope,
+} from "../../../redux/services/menuItem.service";
 import { MenuItem } from "../../../utils/types/menuItem.types";
+import useMediaQuery from "../../../utils/hooks/useMediaQuery";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars, faEarthAfrica } from "@fortawesome/free-solid-svg-icons";
+import Drawer from "./Drawer";
 
 const Header = ({ bigTitle }: HeaderProps) => {
+  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+
+  const [showDrawer, setShowDrawer] = useState(false);
+
   const dispatch = useDispatch();
-  const menuItems = useSelector((state: any) => state.menuItems?.menuItemList?.data?.menuItemList)
+  const menuItems = useSelector(
+    (state: any) => state.menuItems?.menuItemList?.data?.menuItemList
+  );
 
   const fetchMenuItems = async () => {
-    await dispatch(getAllMenuItemsByScope({ sortOrder: 'asc', scope: ["navigation"] }) as any)
+    await dispatch(
+      getAllMenuItemsByScope({ sortOrder: "asc", scope: ["navigation"] }) as any
+    );
+  };
+
+  const handleClose = () => setShowDrawer(false);
+  const handleShow = () => {
+    fetchMenuItems();
+    setShowDrawer(true);
   }
 
-  useEffect(() => {
-    fetchMenuItems()
-  }, [])
-
   return (
-    <Navbar collapseOnSelect expand="lg" className="header">
-      <Container>
-        <Navbar.Brand href="/" className="brand">
-          {bigTitle}
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-        <Navbar.Collapse id="responsive-navbar-nav">
-          <Nav className="m-auto menu">
-            {menuItems?.map((item: MenuItem) => (
-              <Link key={item?._id} to={item.link} className="navlink">
-                <Nav.Link href={item.link}>{item.label?.en}</Nav.Link>
-              </Link>
-            ))}
-          </Nav>
-          <Nav className="controls">
-            <Button variant="primary" as="a">
-              Create Account
+    <>
+      <Navbar
+        collapseOnSelect
+        expand="lg"
+        className="header"
+        bg="dark"
+        data-bs-theme="dark"
+      >
+        <Container>
+          <Navbar.Brand href="/" className="brand">
+            {bigTitle}
+          </Navbar.Brand>
+          <ButtonGroup aria-label="Basic example">
+            <Button variant="dark" size="lg">
+              <FontAwesomeIcon icon={faEarthAfrica} />
             </Button>
-            <Button variant="warning" as="a">
-              Sign In
+            <Button variant="dark" size="lg" onClick={handleShow}>
+              <FontAwesomeIcon icon={faBars} />
             </Button>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+          </ButtonGroup>
+        </Container>
+      </Navbar>
+      <Drawer show={showDrawer} onHide={handleClose} placement="end" />
+    </>
   );
 };
 

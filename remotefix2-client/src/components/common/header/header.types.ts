@@ -1,3 +1,4 @@
+import { OffcanvasPlacement } from "react-bootstrap/esm/Offcanvas";
 import { MultiLanguageText } from "../../../utils/types/common";
 
 export type NavItem = {
@@ -11,4 +12,10 @@ export type NavItem = {
 
 export interface HeaderProps {
   bigTitle: string;
+}
+
+export interface DrawerProps {
+  show: any;
+  onHide: any;
+  placement: OffcanvasPlacement | undefined;
 }

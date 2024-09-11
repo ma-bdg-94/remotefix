@@ -20,12 +20,13 @@ export default class MenuItemController {
           en: label?.en,
           ar: label?.ar,
         },
-        link,
+        link: scope?.includes("navigation") ? "#" : link,
         isPrivate,
         icon,
         order: menuItemsCount + 1,
         archived: false,
         scope,
+        subItems: scope?.includes("navigation") ? [] : undefined
       });
 
       await menuItem.save();
