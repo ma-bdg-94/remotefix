@@ -3,7 +3,6 @@ import { MultiLanguageText } from "./common";
 
 export interface CurrencyInterface extends Document {
   iso4217Code: string;
-  numCode: number;
   name: MultiLanguageText;
   symbol?: string;
   deleted: boolean;

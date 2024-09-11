@@ -18,10 +18,6 @@ const CurrencySchema = new Schema<CurrencyInterface>(
       type: String,
       required: true,
     },
-    numCode: {
-      type: Number,
-      required: true,
-    },
     symbol: {
       type: String,
       required: false,
