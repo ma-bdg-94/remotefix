@@ -1,4 +1,4 @@
-import { Document, Date, Schema } from "mongoose";
+import { Document, Date, Schema, Types } from "mongoose";
 import { MultiLanguageText } from "./common";
 
 export interface MenuItemInterface extends Document {
@@ -10,7 +10,7 @@ export interface MenuItemInterface extends Document {
   deleted: boolean;
   archived: boolean;
   order: number;
-  subItems?: Schema.Types.ObjectId[]
+  subItems?: Schema.Types.ObjectId[] | Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   __v: number;

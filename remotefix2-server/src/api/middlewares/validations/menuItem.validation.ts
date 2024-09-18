@@ -155,16 +155,18 @@ export const validateMenuItemId = (
 ): Promise<Response> | any => {
   const errors: ValidationError[] = [];
 
-  if (!isValidObjectId(req.params.id)) {
-    errors.push({
-      fields: ["_id"],
-      description: {
-        en: "Menu item's ID seems invalid!",
-        ar: "معرف عنصر القائمة يبدو غير صالح!",
-      },
-      error: status[status.BAD_REQUEST].toUpperCase(),
-      code: status.BAD_REQUEST,
-    });
+  for (const [paramKey, paramValue] of Object.entries(req.params)) {
+    if (!isValidObjectId(paramValue)) {
+      errors.push({
+        fields: ["_id"],
+        description: {
+          en: `Menu ${paramKey === 'subItemId' ? 'sub-' : ''}item's ID seems invalid!`,
+          ar: `معرف عنصر القائمة ${paramKey === 'subItemId' ? 'الفرعي ' : ''}يبدو غير صالح!`,
+        },
+        error: status[status.BAD_REQUEST].toUpperCase(),
+        code: status.BAD_REQUEST,
+      });
+    }
   }
 
   if (errors.length > 0) {

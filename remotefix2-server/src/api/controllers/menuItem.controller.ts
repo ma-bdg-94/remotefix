@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import * as status from "http-status";
 import { MenuItem } from "../models";
 import { MenuItemInterface } from "../../utils/types/menuItem.types";
-import { SortOrder } from "mongoose";
+import { SortOrder, Types } from "mongoose";
 
 export default class MenuItemController {
   async createMenuItem(req: Request, res: Response): Promise<Response> {
@@ -13,8 +13,11 @@ export default class MenuItemController {
        */
 
       if (link !== "#") {
-        const existingMenuItem = await MenuItem.findOne({ link, deleted: false });
-  
+        const existingMenuItem = await MenuItem.findOne({
+          link,
+          deleted: false,
+        });
+
         if (existingMenuItem) {
           return res.status(status.CONFLICT).json({
             success: false,
@@ -35,20 +38,23 @@ export default class MenuItemController {
 
       let menuItemsCount: number = await MenuItem.find({
         deleted: false,
-        scope
+        scope,
       }).countDocuments();
       let menuItem: MenuItemInterface = new MenuItem({
         label: {
           en: label?.en,
           ar: label?.ar,
         },
-        link: (scope?.includes("navigation") && !scope?.includes("sub_item")) ? "#" : link,
+        link:
+          scope?.includes("navigation") && !scope?.includes("sub_item")
+            ? "#"
+            : link,
         isPrivate,
         icon,
         order: menuItemsCount + 1,
         archived: false,
         scope,
-        subItems: scope?.includes("navigation") ? [] : undefined
+        subItems: scope?.includes("navigation") ? [] : undefined,
       });
 
       await menuItem.save();
@@ -114,7 +120,6 @@ export default class MenuItemController {
        * Here is missing Super Admin Authorization
        */
 
-      // console.log("sortOrder:", sortOrder, req.query.sortOrder, typeof sortOrder, typeof req.query.sortOrder);
       return res.status(status.OK).json({
         success: true,
         message: status[status.OK].toUpperCase(),
@@ -271,7 +276,7 @@ export default class MenuItemController {
       const menuItem: MenuItemInterface | null = await MenuItem.findOne({
         deleted: false,
         _id: id,
-      });
+      }).populate({ path: "subItems", options: { sort: { order: 1 } } });
 
       if (!menuItem) {
         return res.status(status.NOT_FOUND).json({
@@ -678,6 +683,185 @@ export default class MenuItemController {
         },
       });
     } catch (error) {
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: status[status.INTERNAL_SERVER_ERROR].toUpperCase(),
+        status: status.INTERNAL_SERVER_ERROR,
+        errors: [{ description: error, fields: ["server"] }],
+      });
+    }
+  }
+
+  async addSubItem(req: Request, res: Response): Promise<Response> {
+    const { itemId, subItemId } = req.params;
+    try {
+      /**
+       * Here is missing Super Admin Authorization
+       */
+
+      let menuItem: MenuItemInterface | null = await MenuItem.findOne({
+        _id: itemId,
+        deleted: false,
+      });
+
+      if (!menuItem) {
+        return res.status(status.NOT_FOUND).json({
+          success: false,
+          message: status[status.NOT_FOUND].toUpperCase(),
+          status: status.NOT_FOUND,
+          errors: [
+            {
+              description: {
+                en: "No menu item with requested data found!",
+                ar: "لم يتم العثور على عنصر قائمة ضمن المعطيات المطلوبة!",
+              },
+              fields: ["_id"],
+            },
+          ],
+        });
+      }
+
+      let menuSubItem: MenuItemInterface | null = await MenuItem.findOne({
+        _id: subItemId,
+        scope: { $all: ["sub_item"] },
+        deleted: false,
+      });
+
+      if (!menuSubItem) {
+        console.log(menuSubItem);
+        return res.status(status.NOT_FOUND).json({
+          success: false,
+          message: status[status.NOT_FOUND].toUpperCase(),
+          status: status.NOT_FOUND,
+          errors: [
+            {
+              description: {
+                en: "No sub-menu item with requested data found!",
+                ar: "لم يتم العثور على عنصر قائمة فرعي ضمن المعطيات المطلوبة!",
+              },
+              fields: ["_id"],
+            },
+          ],
+        });
+      }
+
+      let subItemCount: number = 0;
+      if (menuItem.subItems) {
+        subItemCount = menuItem.subItems.length;
+      }
+
+      const convertedSubMenuId = new Types.ObjectId(subItemId);
+      menuItem.subItems?.push(convertedSubMenuId as any);
+
+      menuSubItem = await MenuItem.findOneAndUpdate(
+        {
+          _id: subItemId,
+          scope: { $all: ["sub_item"] },
+          deleted: false,
+        },
+        { order: subItemCount + 1 },
+        { new: true }
+      );
+
+      await menuItem.save();
+
+      return res.status(status.OK).json({
+        success: true,
+        message: status[status.OK].toUpperCase(),
+        status: status.OK,
+        data: {
+          description: {
+            en: "Menu sub-item added successfully!",
+            ar: "تمت إضافة عنصر القائمة الفرعي بنجاح!",
+          },
+          menuItem,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: status[status.INTERNAL_SERVER_ERROR].toUpperCase(),
+        status: status.INTERNAL_SERVER_ERROR,
+        errors: [{ description: error, fields: ["server"] }],
+      });
+    }
+  }
+
+  async removeSubItem(req: Request, res: Response): Promise<Response> {
+    const { itemId, subItemId } = req.params;
+    try {
+      /**
+       * Here is missing Super Admin Authorization
+       */
+
+      let menuItem: MenuItemInterface | null = await MenuItem.findOne({
+        _id: itemId,
+        deleted: false,
+      });
+
+      if (!menuItem) {
+        return res.status(status.NOT_FOUND).json({
+          success: false,
+          message: status[status.NOT_FOUND].toUpperCase(),
+          status: status.NOT_FOUND,
+          errors: [
+            {
+              description: {
+                en: "No menu item with requested data found!",
+                ar: "لم يتم العثور على عنصر قائمة ضمن المعطيات المطلوبة!",
+              },
+              fields: ["_id"],
+            },
+          ],
+        });
+      }
+
+      let menuSubItem: MenuItemInterface | null = await MenuItem.findOne({
+        _id: subItemId,
+        scope: { $all: ["sub_item"] },
+        deleted: false,
+      });
+
+      if (!menuSubItem) {
+        return res.status(status.NOT_FOUND).json({
+          success: false,
+          message: status[status.NOT_FOUND].toUpperCase(),
+          status: status.NOT_FOUND,
+          errors: [
+            {
+              description: {
+                en: "No menu sub-item with requested data found!",
+                ar: "لم يتم العثور على عنصر قائمة فرعية ضمن المعطيات المطلوبة!",
+              },
+              fields: ["_id"],
+            },
+          ],
+        });
+      }
+
+      const convertedSubMenuId = new Types.ObjectId(subItemId);
+      const subMenuIndex = menuItem?.subItems?.indexOf(
+        convertedSubMenuId as any
+      );
+      menuItem?.subItems?.splice(subMenuIndex!, 1);
+
+      await menuItem.save();
+
+      return res.status(status.OK).json({
+        success: true,
+        message: status[status.OK].toUpperCase(),
+        status: status.OK,
+        data: {
+          description: {
+            en: "Menu sub-item removed successfully!",
+            ar: "تم حذف عنصر القائمة الفرعي بنجاح!",
+          },
+          menuItem,
+        },
+      });
+    } catch (error) {
+      console.error(error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: status[status.INTERNAL_SERVER_ERROR].toUpperCase(),
