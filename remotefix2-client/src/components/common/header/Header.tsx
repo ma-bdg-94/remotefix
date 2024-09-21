@@ -1,37 +1,25 @@
 import {
-  Accordion,
   Button,
   ButtonGroup,
   Container,
-  Nav,
-  NavDropdown,
+  Dropdown,
+  DropdownButton,
   Navbar,
-  Offcanvas,
 } from "react-bootstrap";
-import { HeaderProps } from "./header.types";
-import { Link } from "react-router-dom";
+import { HeaderProps } from "../../../utils/types/menuItem.types";
 import "./header.scss";
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import {
-  getAllMenuItemsByScope,
-  getPrivateMenuItemsByScope,
-} from "../../../redux/services/menuItem.service";
-import { MenuItem } from "../../../utils/types/menuItem.types";
-import useMediaQuery from "../../../utils/hooks/useMediaQuery";
+import { useDispatch } from "react-redux";
+import { useState } from "react";
+import { getAllMenuItemsByScope } from "../../../redux/services/menuItem.service";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faEarthAfrica } from "@fortawesome/free-solid-svg-icons";
 import Drawer from "./Drawer";
+import { useTranslation } from "react-i18next";
 
 const Header = ({ bigTitle }: HeaderProps) => {
-  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-
   const [showDrawer, setShowDrawer] = useState(false);
 
   const dispatch = useDispatch();
-  const menuItems = useSelector(
-    (state: any) => state.menuItems?.menuItemList?.data?.menuItemList
-  );
 
   const fetchMenuItems = async () => {
     await dispatch(
@@ -43,7 +31,22 @@ const Header = ({ bigTitle }: HeaderProps) => {
   const handleShow = () => {
     fetchMenuItems();
     setShowDrawer(true);
-  }
+  };
+
+  const { t, i18n } = useTranslation();
+  const { language } = i18n;
+
+  const handleLanguageSelect = (lang: any) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem("i18nextLng", lang);
+
+    if (lang === "ar") {
+      document.documentElement.setAttribute("dir", "rtl");
+    } else {
+      document.documentElement.setAttribute("dir", "ltr");
+    }
+    window.location.reload();
+  };
 
   return (
     <>
@@ -58,17 +61,42 @@ const Header = ({ bigTitle }: HeaderProps) => {
           <Navbar.Brand href="/" className="brand">
             {bigTitle}
           </Navbar.Brand>
-          <ButtonGroup aria-label="Basic example">
-            <Button variant="dark" size="lg">
-              <FontAwesomeIcon icon={faEarthAfrica} />
-            </Button>
+          <ButtonGroup
+            aria-label="Basic example"
+            className="align-items-center btns"
+          >
+            <DropdownButton
+              variant="dark"
+              size="lg"
+              title={<FontAwesomeIcon icon={faEarthAfrica} />}
+              
+            >
+              <Dropdown.Item
+                as="button"
+                onClick={() => handleLanguageSelect("en")}
+                className="d-flex justify-content-start"
+              >
+                <span className="fi fi-gb mx-2"></span> {t("English")}
+              </Dropdown.Item>
+              <Dropdown.Item
+                as="button"
+                onClick={() => handleLanguageSelect("ar")}
+                className="d-flex justify-content-start"
+              >
+                <span className="fi fi-tn mx-2"></span> {t("Arabic")}
+              </Dropdown.Item>
+            </DropdownButton>
             <Button variant="dark" size="lg" onClick={handleShow}>
               <FontAwesomeIcon icon={faBars} />
             </Button>
           </ButtonGroup>
         </Container>
       </Navbar>
-      <Drawer show={showDrawer} onHide={handleClose} placement="end" />
+      <Drawer
+        show={showDrawer}
+        onHide={handleClose}
+        placement={language === "ar" ? "start" : "end"}
+      />
     </>
   );
 };

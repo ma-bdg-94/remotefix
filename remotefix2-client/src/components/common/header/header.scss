@@ -21,12 +21,21 @@
     font-weight: bolder;
   }
 
-  .menu, .controls {
+  .btns {
+    .dropdown {
+      .dropdown-toggle::after {
+        display: none;
+      }
+    }
+  }
+
+  .menu,
+  .controls {
     font-family: "Poppins", sans-serif;
   }
 
   .controls {
-    font-size: .8rem !important;
+    font-size: 0.8rem !important;
     font-weight: bold;
     width: 25%;
     justify-content: space-between;
@@ -43,6 +52,27 @@
       border: none;
       justify-content: center;
       align-items: center;
+    }
+  }
+}
+
+.drawer {
+  &_header {
+    &_title {
+      width: 95%;
+    }
+  }
+
+  &_body {
+    &_accordion {
+      &_item {
+        &_header {
+          .accordion-button::after {
+            margin-inline-start: 85%;
+            position: absolute
+          }
+        }
+      }
     }
   }
 }

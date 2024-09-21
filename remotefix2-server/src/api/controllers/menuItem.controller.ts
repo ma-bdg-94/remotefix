@@ -163,8 +163,11 @@ export default class MenuItemController {
     try {
       const menuItemList: MenuItemInterface[] | [] = await MenuItem.find({
         deleted: false,
-        scope: { $all: scope },
-      }).sort({ order: sortOrder });
+        scope,
+      })
+        .sort({ order: sortOrder })
+        .populate({ path: "subItems", options: { sort: { order: 1 } } })
+        .exec();
 
       if (menuItemList?.length < 1) {
         return res.status(status.NOT_FOUND).json({
@@ -276,7 +279,9 @@ export default class MenuItemController {
       const menuItem: MenuItemInterface | null = await MenuItem.findOne({
         deleted: false,
         _id: id,
-      }).populate({ path: "subItems", options: { sort: { order: 1 } } });
+      })
+        .populate({ path: "subItems", options: { sort: { order: 1 } } })
+        .exec();
 
       if (!menuItem) {
         return res.status(status.NOT_FOUND).json({
