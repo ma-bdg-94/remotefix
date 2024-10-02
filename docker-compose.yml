@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+  remotefix-server:
+    build: './remotefix-server'
+    container_name: 'remotefix-server'
+    restart: always
+    env_file:
+      - './.env'
+    environment:
+      NODE_ENV: 'stage'
+      PORT: ${APP_PORT_STAGE}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - '${APP_PORT_STAGE}:${APP_PORT_DEV}'
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./remotefix-server:/app
+    networks:
+      - app-network
+  
+  remotefix-client:
+    build: './remotefix2-client'
+    container_name: 'remotefix-client'
+    restart: always
+    ports:
+      - '3000:3000'
+    depends_on:
+      - remotefix-server
+    volumes:
+      - ./remotefix-client:/app
+    networks:
+      - app-network
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    restart: always
+    env_file:
+      - './.env'
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redisdata:/data
+  
+  postgres:
+    container_name: postgres
+    image: postgres:17-alpine
+    restart: always
+    env_file:
+      - './.env'
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USERNAME=${POSTGRES_USERNAME}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
