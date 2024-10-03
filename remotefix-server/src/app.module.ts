@@ -6,23 +6,16 @@ import { join } from 'path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsModule } from './accounts/accounts.module';
 import { DataSource } from 'typeorm';
-import { Accounts } from './accounts/accounts.entity';
-import { AddressesModule } from './addresses/addresses.module';
-import { Addresses } from './addresses/addresses.entity';
-import { CountriesModule } from './countries/countries.module';
-import { Countries } from './countries/countries.entity';
+import { Account } from './accounts/accounts.entity';
 import { CurrenciesModule } from './currencies/currencies.module';
-import { Currencies } from './currencies/currencies.entity';
-import { IndustriesModule } from './industries/industries.module';
-import { Industries } from './industries/industries.entity';
+import { Currency } from './currencies/currencies.entity';
 import { MenuItemsModule } from './menu_items/menu_items.module';
-import { MenuItems } from './menu_items/menu_items.entity';
-import { RegistriesModule } from './registries/registries.module';
-import { Registries } from './registries/registries.entity';
+import { MenuItem } from './menu_items/menu_items.entity';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { CustomExceptionFilter } from './config/filters/custom-exception.filter';
 import { SuccessResponseInterceptor } from './config/interceptors/success_response.interceptor';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BaseModule } from './base/base.module';
 import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
@@ -49,25 +42,14 @@ import * as redisStore from 'cache-manager-redis-store';
         port: parseInt(configService.get('POSTGRES_PORT'), 10),
         username: configService.get('POSTGRES_USERNAME'),
         database: configService.get('POSTGRES_DB'),
-        entities: [
-          Accounts,
-          Addresses,
-          Countries,
-          Currencies,
-          Industries,
-          MenuItems,
-          Registries,
-        ],
+        entities: [Account, Currency, MenuItem],
         synchronize: true,
       }),
     }),
     AccountsModule,
-    AddressesModule,
-    CountriesModule,
     CurrenciesModule,
-    IndustriesModule,
     MenuItemsModule,
-    RegistriesModule,
+    BaseModule,
   ],
   controllers: [AppController],
   providers: [

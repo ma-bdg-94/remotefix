@@ -4,29 +4,30 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MenuItems } from './menu_items.entity';
+import { MenuItem } from './menu_items.entity';
 import { LessThan, Raw, Repository } from 'typeorm';
 import { subDays } from 'date-fns';
+import { BaseService } from 'src/base/base.service';
+import { DeletedStatus } from 'src/config/types/types';
 
 @Injectable()
-export class MenuItemsService {
+export class MenuItemService extends BaseService<MenuItem> {
   constructor(
-    @InjectRepository(MenuItems)
-    private menuItemsRepository: Repository<MenuItems>,
-  ) {}
+    @InjectRepository(MenuItem)
+    private menuItemRepository: Repository<MenuItem>,
+  ) {
+    super(menuItemRepository);
+  }
 
-  private linkRegex =
-    /^(?:(?:https?|ftp):\/\/|#|\/)(?:[\w_-]+(?:\/[\w_-]+)*)?(?:\?[\w_-]+=\w+(&[\w_-]+=\w+)*)?$/;
-
-  async createOne(menuItemData: Partial<MenuItems>): Promise<MenuItems> {
-    const { label, link, scope } = menuItemData;
-    const existingMenuItem = await this.menuItemsRepository.findOneBy({
+  async createOne(menuItemData: Partial<MenuItem>): Promise<MenuItem> {
+    const { link } = menuItemData;
+    const existingMenuItem = await this.menuItemRepository.findOneBy({
       link,
     });
 
+    // conflict check
     if (existingMenuItem && menuItemData.link !== '#') {
       throw new ConflictException({
         status: HttpStatus.CONFLICT,
@@ -34,68 +35,48 @@ export class MenuItemsService {
       });
     }
 
-    // validations
-    if (!label || !link || !scope) {
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        message: `
-          Could not create new menu item, one or multiple datas are missing:
-            ${!label && 'Label (Both in english and arabic).'}
-            ${!link && 'Link.'}
-            ${!scope && 'Scope (Please choose from the list).'}
-          `,
-      });
-    }
-    if (link && !this.linkRegex.test(link)) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: `Could not create new menu item, ${link} seems not a valid link.`,
-      });
-    }
-
-    const newMenuItem = this.menuItemsRepository.create(menuItemData);
-    const existingMenuItemsCount = await this.menuItemsRepository.countBy({
-      deleted: false,
+    const existingMenuItemsCount = await this.menuItemRepository.countBy({
+      is_deleted: false,
     });
 
     // define some default values
-    newMenuItem['position'] = existingMenuItemsCount + 1;
-    newMenuItem['subItems'] = menuItemData.subItems
-      ? newMenuItem['subItems']
-      : [];
+    menuItemData['position'] = existingMenuItemsCount + 1;
 
-    return await this.menuItemsRepository.save(newMenuItem);
+    return await super.createOne(menuItemData);
   }
 
-  async findAll(sortingDirection: string): Promise<MenuItems[]> {
-    const validDirections: ('ASC' | 'DESC')[] = ['ASC', 'DESC'];
-    const direction: 'ASC' | 'DESC' = validDirections.includes(
-      sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC',
-    )
-      ? (sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC')
-      : 'ASC';
+  async findAll(
+    order_criterion: keyof MenuItem,
+    order_value: 'ASC' | 'DESC',
+    deletedStatus: DeletedStatus,
+  ): Promise<MenuItem[]> {
+    // const validDirections: ('ASC' | 'DESC')[] = ['ASC', 'DESC'];
+    // if (!validDirections.includes(order_value)) {
+    //   order_value = 'ASC';
+    // }
 
-    const menuItemList = await this.menuItemsRepository.find({
-      where: { deleted: false },
-      order: {
-        position: direction,
-      },
-    });
+    // const menuItemList = await this.menuItemRepository.find({
+    //   where: { is_deleted: false },
+    //   order: {
+    //     position: direction,
+    //   },
+    // });
 
-    if (menuItemList.length < 1) {
-      throw new NotFoundException({
-        status: HttpStatus.NOT_FOUND,
-        message: 'No menu item found in the database!',
-      });
-    }
+    // if (menuItemList.length < 1) {
+    //   throw new NotFoundException({
+    //     status: HttpStatus.NOT_FOUND,
+    //     message: 'No menu item found in the database!',
+    //   });
+    // }
 
-    return menuItemList;
+    // return menuItemList;
+    return super.findAll(order_criterion, order_value, deletedStatus);
   }
 
   async findAllByScope(
     scope: string,
     sortingDirection: string,
-  ): Promise<MenuItems[]> {
+  ): Promise<MenuItem[]> {
     const validDirections: ('ASC' | 'DESC')[] = ['ASC', 'DESC'];
     const direction: 'ASC' | 'DESC' = validDirections.includes(
       sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC',
@@ -103,9 +84,9 @@ export class MenuItemsService {
       ? (sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC')
       : 'ASC';
 
-    const menuItemList = await this.menuItemsRepository.find({
+    const menuItemList = await this.menuItemRepository.find({
       where: {
-        deleted: false,
+        is_deleted: false,
         scope,
       },
       order: {
@@ -126,7 +107,7 @@ export class MenuItemsService {
   async findAllPrivateByScope(
     scope: string,
     sortingDirection: string,
-  ): Promise<MenuItems[]> {
+  ): Promise<MenuItem[]> {
     const validDirections: ('ASC' | 'DESC')[] = ['ASC', 'DESC'];
     const direction: 'ASC' | 'DESC' = validDirections.includes(
       sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC',
@@ -134,10 +115,10 @@ export class MenuItemsService {
       ? (sortingDirection.toLocaleUpperCase() as 'ASC' | 'DESC')
       : 'ASC';
 
-    const menuItemList = await this.menuItemsRepository.find({
+    const menuItemList = await this.menuItemRepository.find({
       where: [
         {
-          deleted: false,
+          is_deleted: false,
           is_private: true,
           scope,
         },
@@ -159,11 +140,11 @@ export class MenuItemsService {
     return menuItemList;
   }
 
-  async findOneById(id: number): Promise<MenuItems | null> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  async findOneById(id: number): Promise<MenuItem | null> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -177,11 +158,11 @@ export class MenuItemsService {
     return menuItem;
   }
 
-  async toggleField(id: number, field: string): Promise<MenuItems | null> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  async toggleField(id: number, field: string): Promise<MenuItem | null> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -199,7 +180,7 @@ export class MenuItemsService {
       });
     }
 
-    if (field === 'deleted') {
+    if (field === 'is_deleted') {
       throw new ForbiddenException({
         status: HttpStatus.FORBIDDEN,
         message: `Field = ${field} is not togglable.`,
@@ -207,21 +188,21 @@ export class MenuItemsService {
     }
 
     menuItem[field] = !menuItem[field];
-    if (field === 'archived') {
+    if (field === 'is_archived') {
       menuItem['archived_at'] = new Date();
     }
-    return await this.menuItemsRepository.save(menuItem);
+    return await this.menuItemRepository.save(menuItem);
   }
 
   async updateField(
     id: number,
     field: string,
     value: any,
-  ): Promise<MenuItems | null> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  ): Promise<MenuItem | null> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -247,17 +228,17 @@ export class MenuItemsService {
     }
 
     menuItem[field] = value;
-    return await this.menuItemsRepository.save(menuItem);
+    return await this.menuItemRepository.save(menuItem);
   }
 
   async updateMultipleFields(
     id: number,
-    menuItemData: Partial<MenuItems>,
-  ): Promise<MenuItems | null> {
-    const menuItem = await this.menuItemsRepository.findOne({
+    menuItemData: Partial<MenuItem>,
+  ): Promise<MenuItem | null> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -268,25 +249,25 @@ export class MenuItemsService {
       });
     }
 
-    if (menuItemData.link && !this.linkRegex.test(menuItemData.link)) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: `Could not create new menu item, ${menuItemData.link} seems not a valid link.`,
-      });
-    }
+    // if (menuItemData.link && !this.linkRegex.test(menuItemData.link)) {
+    //   throw new UnprocessableEntityException({
+    //     status: HttpStatus.UNPROCESSABLE_ENTITY,
+    //     message: `Could not create new menu item, ${menuItemData.link} seems not a valid link.`,
+    //   });
+    // }
 
-    const updatedMenuItem = this.menuItemsRepository.merge(
+    const updatedMenuItem = this.menuItemRepository.merge(
       menuItem,
       menuItemData,
     );
-    return await this.menuItemsRepository.save(updatedMenuItem);
+    return await this.menuItemRepository.save(updatedMenuItem);
   }
 
-  async softDelete(id: number): Promise<MenuItems | null> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  async softDelete(id: number): Promise<MenuItem | null> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -297,16 +278,16 @@ export class MenuItemsService {
       });
     }
 
-    menuItem['deleted'] = true;
-    return await this.menuItemsRepository.save(menuItem);
+    menuItem['is_deleted'] = true;
+    return await this.menuItemRepository.save(menuItem);
   }
 
   async remove(id: number): Promise<void> {
     const date_60_days_ago: Date = subDays(new Date(), 60);
-    const menuItem = await this.menuItemsRepository.findOne({
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: true,
+        is_deleted: true,
         deleted_at: LessThan(date_60_days_ago),
       },
     });
@@ -318,14 +299,14 @@ export class MenuItemsService {
       });
     }
 
-    await this.menuItemsRepository.delete(id);
+    await this.menuItemRepository.delete(id);
   }
 
-  async addSubEntity(id: number, subEntityId: number): Promise<MenuItems> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  async addSubEntity(id: number, subEntityId: number): Promise<MenuItem> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -336,10 +317,10 @@ export class MenuItemsService {
       });
     }
 
-    const subMenuItem = await this.menuItemsRepository.findOneBy({
+    const subMenuItem = await this.menuItemRepository.findOneBy({
       id: subEntityId,
       scope: Raw((alias) => `:scope = ANY(${alias})`, { scope: 'sub_item' }),
-      deleted: false,
+      is_deleted: false,
     });
 
     if (!subMenuItem) {
@@ -349,16 +330,16 @@ export class MenuItemsService {
       });
     }
 
-    menuItem['subItems'].push(subMenuItem.id);
-    subMenuItem['position'] = menuItem['subItems'].length + 1;
-    return await this.menuItemsRepository.save(menuItem);
+    menuItem['sub_items'].push(subMenuItem.id);
+    subMenuItem['position'] = menuItem['sub_items'].length + 1;
+    return await this.menuItemRepository.save(menuItem);
   }
 
-  async removeSubEntity(id: number, subEntityId: number): Promise<MenuItems> {
-    const menuItem = await this.menuItemsRepository.findOne({
+  async removeSubEntity(id: number, subEntityId: number): Promise<MenuItem> {
+    const menuItem = await this.menuItemRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -369,10 +350,10 @@ export class MenuItemsService {
       });
     }
 
-    const subMenuItem = await this.menuItemsRepository.findOneBy({
+    const subMenuItem = await this.menuItemRepository.findOneBy({
       id: subEntityId,
       scope: Raw((alias) => `:scope = ANY(${alias})`, { scope: 'sub_item' }),
-      deleted: false,
+      is_deleted: false,
     });
 
     if (!subMenuItem) {
@@ -382,8 +363,8 @@ export class MenuItemsService {
       });
     }
 
-    const subItemIndex = menuItem['subItems'].indexOf(subMenuItem.id);
-    menuItem['subItems'].splice(subItemIndex, 1);
-    return await this.menuItemsRepository.save(menuItem);
+    const subItemIndex = menuItem['sub_items'].indexOf(subMenuItem.id);
+    menuItem['sub_items'].splice(subItemIndex, 1);
+    return await this.menuItemRepository.save(menuItem);
   }
 }

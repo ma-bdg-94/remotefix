@@ -8,7 +8,7 @@ export type CurrencyTemplate = {
 export const currencies: CurrencyTemplate[] = [
   {
     symbol: '$',
-    name: 'US Dollar',
+    name: 'United States Dollar',
     symbolNative: '$',
     isoCode: 'USD',
   },

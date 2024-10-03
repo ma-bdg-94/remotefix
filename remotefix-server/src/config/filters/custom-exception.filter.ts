@@ -5,7 +5,8 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { APIResponse, Multilanguage } from '../types/types';
+import { APIResponse } from '../types/types';
+import { ValidationError } from 'class-validator'; // Import ValidationError
 
 @Catch()
 export class CustomExceptionFilter implements ExceptionFilter {
@@ -14,22 +15,29 @@ export class CustomExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse();
     const request = ctx.getRequest();
 
+    // Determine the response status code
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const defaultMessage: string = 'An unexpected error occurred'
-    
+    const defaultMessage: string = 'An unexpected error occurred';
 
-    const message: string =
-      exception instanceof HttpException
-        ? (exception.getResponse() as any).message || defaultMessage
-        : defaultMessage;
+    let message: string | string[] = defaultMessage; // Initialize message
 
+    // Handle validation errors
+    if (Array.isArray(exception?.response?.message)) {
+      message = exception.response.message.map((err: ValidationError) => {
+        return Object.values(err.constraints).join(', ');
+      });
+    } else if (exception instanceof HttpException) {
+      message = exception.getResponse() as any;
+    }
+
+    // Structure the response body
     const responseBody: APIResponse = {
       status,
-      message: exception,
+      message: Array.isArray(message) ? message : [message], // Ensure message is always an array
       data: null,
     };
 

@@ -6,7 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Currencies } from './currencies.entity';
+import { Currency } from './currencies.entity';
 import { LessThan, Repository } from 'typeorm';
 import { CurrencyTemplate, currencies } from './currencies.utils';
 import { subDays } from 'date-fns';
@@ -14,8 +14,8 @@ import { subDays } from 'date-fns';
 @Injectable()
 export class CurrenciesService {
   constructor(
-    @InjectRepository(Currencies)
-    private currenciesRepository: Repository<Currencies>,
+    @InjectRepository(Currency)
+    private currenciesRepository: Repository<Currency>,
   ) {}
 
   private currencyAvailableCodes: string[] = currencies?.map(
@@ -31,7 +31,7 @@ export class CurrenciesService {
     ),
   ];
 
-  async addOne(currencyData: Partial<Currencies>): Promise<Currencies> {
+  async addOne(currencyData: Partial<Currency>): Promise<Currency> {
     const { name, isoCode, symbol } = currencyData;
     const existingCurrency = await this.currenciesRepository.findOneBy({
       isoCode,
@@ -40,7 +40,7 @@ export class CurrenciesService {
     if (existingCurrency) {
       throw new ConflictException({
         status: HttpStatus.CONFLICT,
-        message: `Currencies with this ISO-4217 code ${isoCode} already exists in the database!`,
+        message: `Currency with this ISO-4217 code ${isoCode} already exists in the database!`,
       });
     }
 
@@ -80,9 +80,9 @@ export class CurrenciesService {
     return await this.currenciesRepository.save(newCurrency);
   }
 
-  async findAll(): Promise<Currencies[]> {
+  async findAll(): Promise<Currency[]> {
     const currencyList = await this.currenciesRepository.find({
-      where: { deleted: false },
+      where: { is_deleted: false },
       order: {
         isoCode: 'ASC',
       },
@@ -100,11 +100,11 @@ export class CurrenciesService {
     return currencyList;
   }
 
-  async findOneById(id: number): Promise<Currencies | null> {
+  async findOneById(id: number): Promise<Currency | null> {
     const currency = await this.currenciesRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -122,13 +122,13 @@ export class CurrenciesService {
 
   async updateMultipleFields(
     id: number,
-    currencyData: Partial<Currencies>,
-  ): Promise<Currencies | null> {
+    currencyData: Partial<Currency>,
+  ): Promise<Currency | null> {
     const { isoCode, symbol } = currencyData;
     const currency = await this.currenciesRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -165,11 +165,11 @@ export class CurrenciesService {
     return await this.currenciesRepository.save(updatedCurrency);
   }
 
-  async toggleArchive(id: number): Promise<Currencies | null> {
+  async toggleArchive(id: number): Promise<Currency | null> {
     const currency = await this.currenciesRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -186,11 +186,11 @@ export class CurrenciesService {
     return await this.currenciesRepository.save(currency);
   }
 
-  async softDelete(id: number): Promise<Currencies | null> {
+  async softDelete(id: number): Promise<Currency | null> {
     const currency = await this.currenciesRepository.findOne({
       where: {
         id,
-        deleted: false,
+        is_deleted: false,
       },
     });
 
@@ -203,7 +203,7 @@ export class CurrenciesService {
       });
     }
 
-    currency['deleted'] = true;
+    currency['is_deleted'] = true;
     return await this.currenciesRepository.save(currency);
   }
 
@@ -212,7 +212,7 @@ export class CurrenciesService {
     const currency = await this.currenciesRepository.findOne({
       where: {
         id,
-        deleted: true,
+        is_deleted: true,
         deleted_at: LessThan(date_60_days_ago),
       },
     });
