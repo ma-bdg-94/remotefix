@@ -16,18 +16,19 @@ import { SuccessResponseInterceptor } from 'src/config/interceptors/success_resp
 import { MenuItemService } from './menu_items.service';
 import {
   CreateMenuItemDTO,
-  UpdateFieldDTO,
+  RemoveMenuItemDTO,
   UpdateMenuItemDTO,
 } from './menu_items.dto';
 import { MenuItem } from './menu_items.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { UpdateFieldDTO } from 'src/base/base.dto';
 
-@UseFilters(CustomExceptionFilter)
 @UseInterceptors(SuccessResponseInterceptor)
 @Controller('api/menu-items')
-export class MenuItemsController {
+export class MenuItemController {
   constructor(private readonly menuItemService: MenuItemService) {}
 
+  @UseFilters(CustomExceptionFilter)
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(3600)
   @Post('')
@@ -40,7 +41,7 @@ export class MenuItemsController {
   @Post('/sub/:id/:subItemId')
   async addSubItem(
     @Param('id') id: number,
-    @Param('subItemId') subItemId: number
+    @Param('subItemId') subItemId: number,
   ): Promise<MenuItem> {
     return this.menuItemService.addSubEntity(id, subItemId);
   }
@@ -50,19 +51,36 @@ export class MenuItemsController {
   @Get('')
   async getAllMenuItems(
     @Query('sort_criterion') sort_criterion: keyof MenuItem,
-    @Query('sort_value') sort_value: "ASC" | "DESC",
+    @Query('sort_value') sort_value: 'ASC' | 'DESC',
+    @Query('page_number') page_number: number,
+    @Query('per_page') per_page: number,
   ): Promise<MenuItem[]> {
-    return this.menuItemService.findAll(sort_criterion, sort_value, { is_deleted: false });
+    return this.menuItemService.findAll(
+      { is_deleted: false },
+      sort_criterion,
+      sort_value,
+      page_number,
+      per_page,
+    );
   }
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(3600)
   @Get('public/scope')
-  async getAllMenuItemsByScope(
+  async getPublicMenuItemsByScope(
     @Query('scope') scope: string,
-    @Query('sortOrder') sort_order: any,
+    @Query('sort_criterion') sort_criterion: keyof MenuItem,
+    @Query('sort_value') sort_value: 'ASC' | 'DESC',
+    @Query('page_number') page_number: number,
+    @Query('per_page') per_page: number,
   ): Promise<MenuItem[]> {
-    return this.menuItemService.findAllByScope(scope, sort_order);
+    return this.menuItemService.findAll(
+      { is_deleted: false, is_private: false, scope },
+      sort_criterion,
+      sort_value,
+      page_number,
+      per_page,
+    );
   }
 
   @UseInterceptors(CacheInterceptor)
@@ -70,9 +88,18 @@ export class MenuItemsController {
   @Get('private/scope')
   async getPrivateMenuItemsByScope(
     @Query('scope') scope: string,
-    @Query('sortOrder') sort_order: any,
+    @Query('sort_criterion') sort_criterion: keyof MenuItem,
+    @Query('sort_value') sort_value: 'ASC' | 'DESC',
+    @Query('page_number') page_number: number,
+    @Query('per_page') per_page: number,
   ): Promise<MenuItem[]> {
-    return this.menuItemService.findAllPrivateByScope(scope, sort_order);
+    return this.menuItemService.findAll(
+      { is_deleted: false, is_private: true, scope },
+      sort_criterion,
+      sort_value,
+      page_number,
+      per_page,
+    );
   }
 
   @UseInterceptors(CacheInterceptor)
@@ -82,23 +109,29 @@ export class MenuItemsController {
     return this.menuItemService.findOneById(id);
   }
 
-  @Patch('toggle/:id')
-  async toggleOneField(
+  @Patch('archive/:id')
+  async toggleMenuItemArchiveStatus(
     @Param('id') id: number,
-    @Query('field') field: string,
   ): Promise<MenuItem | null> {
-    return this.menuItemService.toggleField(id, field);
+    return this.menuItemService.toggleField(id, 'is_archived');
   }
 
-  @Patch('delete/:id')
+  @Patch('privacy/:id')
+  async toggleMenuItemPrivacy(
+    @Param('id') id: number,
+  ): Promise<MenuItem | null> {
+    return this.menuItemService.toggleField(id, 'is_private');
+  }
+
+  @Patch('soft_delete/:id')
   async softDeleteMenuItem(@Param('id') id: number): Promise<MenuItem | null> {
-    return this.menuItemService.softDelete(id);
+    return this.menuItemService.toggleField(id, 'is_deleted');
   }
 
   @Patch('field/:id')
   async updateOneField(
     @Param('id') id: number,
-    @Body() updateFieldDTO: UpdateFieldDTO,
+    @Body() updateFieldDTO: UpdateFieldDTO<MenuItem>,
   ): Promise<MenuItem | null> {
     const { field, value } = updateFieldDTO;
     return this.menuItemService.updateField(id, field, value);
@@ -107,20 +140,23 @@ export class MenuItemsController {
   @Put(':id')
   async updateMenuItem(
     @Param('id') id: number,
-    updateMenuItemDTO: UpdateMenuItemDTO,
+    @Body() updateMenuItemDTO: UpdateMenuItemDTO,
   ): Promise<MenuItem | null> {
-    return this.menuItemService.updateMultipleFields(id, updateMenuItemDTO);
+    return this.menuItemService.updateEntity(id, updateMenuItemDTO);
   }
 
   @Delete(':id')
-  async removeMenuItem(@Param('id') id: number): Promise<void> {
-    return this.menuItemService.remove(id);
+  async removeMenuItem(
+    @Param('id') id: number,
+    @Body() removeMenuItemDTO: RemoveMenuItemDTO,
+  ): Promise<void> {
+    return this.menuItemService.remove(id, removeMenuItemDTO);
   }
 
   @Delete('/sub/:id/:subItemId')
   async removeSubItem(
     @Param('id') id: number,
-    @Param('subItemId') subItemId: number
+    @Param('subItemId') subItemId: number,
   ): Promise<MenuItem> {
     return this.menuItemService.removeSubEntity(id, subItemId);
   }

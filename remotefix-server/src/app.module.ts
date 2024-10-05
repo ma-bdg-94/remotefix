@@ -7,9 +7,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsModule } from './accounts/accounts.module';
 import { DataSource } from 'typeorm';
 import { Account } from './accounts/accounts.entity';
-import { CurrenciesModule } from './currencies/currencies.module';
+import { CurrencyModule } from './currencies/currencies.module';
 import { Currency } from './currencies/currencies.entity';
-import { MenuItemsModule } from './menu_items/menu_items.module';
+import { MenuItemModule } from './menu_items/menu_items.module';
 import { MenuItem } from './menu_items/menu_items.entity';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { CustomExceptionFilter } from './config/filters/custom-exception.filter';
@@ -41,14 +41,15 @@ import * as redisStore from 'cache-manager-redis-store';
         host: configService.get('POSTGRES_HOST'),
         port: parseInt(configService.get('POSTGRES_PORT'), 10),
         username: configService.get('POSTGRES_USERNAME'),
+        password: configService.get('POSTGRES_PASSWORD'),
         database: configService.get('POSTGRES_DB'),
         entities: [Account, Currency, MenuItem],
         synchronize: true,
       }),
     }),
     AccountsModule,
-    CurrenciesModule,
-    MenuItemsModule,
+    CurrencyModule,
+    MenuItemModule,
     BaseModule,
   ],
   controllers: [AppController],

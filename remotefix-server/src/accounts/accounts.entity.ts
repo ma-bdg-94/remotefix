@@ -5,16 +5,6 @@ import { Currency } from 'src/currencies/currencies.entity';
 import { Entity, Column, ManyToOne, JoinColumn, Check } from 'typeorm';
 
 @Entity('accounts')
-@Check(
-  `
-  "monthly_fee" >= 0 AND 
-  "nb_companies" >= 1 AND 
-  array_length("nb_work_orders", 1) = 2 AND 
-  (SELECT COUNT(*) FROM unnest("nb_work_orders") WHERE elem < 1) = 0 AND 
-  array_length("nb_employees", 1) = 2 AND 
-  (SELECT COUNT(*) FROM unnest("nb_employees") WHERE elem < 1) = 0
-  `,
-)
 export class Account extends BaseEntity {
   @Column('varchar', { length: 255 })
   @IsNotEmpty({ message: "Account's label is required!" })

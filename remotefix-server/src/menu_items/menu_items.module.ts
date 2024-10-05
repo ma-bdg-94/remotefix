@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { MenuItemsService } from './menu_items.service';
+import { MenuItemService } from './menu_items.service';
 import { MenuItem } from './menu_items.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MenuItemsController } from './menu_items.controller';
+import { MenuItemController } from './menu_items.controller';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MenuItem])],
-  providers: [MenuItemsService],
-  controllers: [MenuItemsController],
+  imports: [TypeOrmModule.forFeature([MenuItem]), CacheModule.register()],
+  providers: [MenuItemService],
+  controllers: [MenuItemController],
 })
-export class MenuItemsModule {}
+export class MenuItemModule {}

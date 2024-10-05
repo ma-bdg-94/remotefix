@@ -24,7 +24,7 @@ export class SuccessResponseInterceptor implements NestInterceptor {
 
         const apiResponse: APIResponse = {
           status: statusCode,
-          message: 'Request was successful',
+          messages: ['Request was successful'],
           data,
         };
         return apiResponse;

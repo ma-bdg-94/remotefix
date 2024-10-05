@@ -7,7 +7,8 @@ export interface Multilanguage {
 
 export interface APIResponse {
   status: number | string;
-  message: string | string[];
+  messages: string | string[];
+  message2?: any;
   data: any;
 }
 

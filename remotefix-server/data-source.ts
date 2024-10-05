@@ -1,4 +1,4 @@
-import { MenuItems } from './src/menu_items/menu_items.entity';
+import { MenuItem } from './src/menu_items/menu_items.entity';
 import { DataSource } from 'typeorm';
 
 export const AppDataSource = new DataSource({
@@ -8,7 +8,7 @@ export const AppDataSource = new DataSource({
   password: 'boudagga94postgres',
   username: 'postgres',
   database: 'postgres',
-  entities: [MenuItems],
+  entities: [MenuItem],
   migrations: ['dist/migrations/*.js'],
   synchronize: false,
 });
